@@ -28,6 +28,23 @@ const students = [
 const databaseName = "kidsgpt-student-uploads";
 const storeName = "uploads";
 const objectUrls = new Map();
+const reflectionPrompts = [
+  {
+    key: "whatIsAi",
+    label: "What is AI?",
+    placeholder: "Write what you think AI is in your own words."
+  },
+  {
+    key: "whatCanAiDo",
+    label: "What can AI do well?",
+    placeholder: "List a few good things AI can help with."
+  },
+  {
+    key: "goodAndBad",
+    label: "What is one good thing and one risky thing about AI?",
+    placeholder: "Example: AI can help me learn, but it can also be wrong."
+  }
+];
 
 bootUploadStudio();
 
@@ -69,6 +86,23 @@ function createStudentSlot(student, record, database) {
       <p class="upload-error" hidden></p>
     </form>
     <div class="upload-panel" hidden>
+      <div class="reflection-box">
+        <h4>Warm-up questions</h4>
+        <p class="reflection-intro">Answer these before you upload your quiz. Short answers are great.</p>
+        <div class="reflection-form">
+          ${reflectionPrompts.map((prompt) => `
+            <label>
+              ${prompt.label}
+              <textarea data-reflection-key="${prompt.key}" placeholder="${prompt.placeholder}"></textarea>
+            </label>
+          `).join("")}
+        </div>
+      </div>
+      <label>
+        Upload your paper prototype
+        <input class="prototype-input" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,image/*,application/pdf">
+      </label>
+      <p class="upload-hint">Take a photo of your paper sketch and save it here too.</p>
       <label>
         Choose your quiz file
         <input class="file-input" type="file" accept=".html,.zip,text/html,application/zip">
@@ -89,14 +123,17 @@ function createStudentSlot(student, record, database) {
   const errorNode = slot.querySelector(".upload-error");
   const panel = slot.querySelector(".upload-panel");
   const badge = slot.querySelector(".student-badge");
+  const prototypeInput = slot.querySelector(".prototype-input");
   const fileInput = slot.querySelector(".file-input");
   const saveButton = slot.querySelector(".upload-button.primary");
   const lockButton = slot.querySelector(".upload-button.secondary");
   const successNode = slot.querySelector(".upload-success");
   const metaNode = slot.querySelector(".upload-meta");
   const previewNode = slot.querySelector(".upload-preview");
+  const reflectionInputs = Array.from(slot.querySelectorAll("[data-reflection-key]"));
 
   let currentRecord = record || null;
+  populateReflectionInputs(reflectionInputs, currentRecord?.reflections);
   renderStoredUpload(student, currentRecord, metaNode, previewNode);
 
   form.addEventListener("submit", async (event) => {
@@ -123,19 +160,25 @@ function createStudentSlot(student, record, database) {
     errorNode.hidden = true;
 
     const file = fileInput.files[0];
+    const prototypeFile = prototypeInput.files[0];
+    const reflections = collectReflections(reflectionInputs);
 
-    if (!file) {
-      errorNode.textContent = "Choose an HTML file or ZIP file first.";
+    if (!file && !prototypeFile && !hasReflectionContent(reflections)) {
+      errorNode.textContent = "Add an answer or choose a file before saving.";
       errorNode.hidden = false;
       return;
     }
 
     const recordToSave = {
       studentId: student.id,
-      fileName: file.name,
-      fileType: file.type || inferFileType(file.name),
+      fileName: file ? file.name : currentRecord?.fileName || "",
+      fileType: file ? (file.type || inferFileType(file.name)) : currentRecord?.fileType || "",
+      prototypeName: prototypeFile ? prototypeFile.name : currentRecord?.prototypeName || "",
+      prototypeType: prototypeFile ? (prototypeFile.type || inferPrototypeType(prototypeFile.name)) : currentRecord?.prototypeType || "",
       updatedAt: new Date().toISOString(),
-      blob: file
+      blob: file || currentRecord?.blob || null,
+      prototypeBlob: prototypeFile || currentRecord?.prototypeBlob || null,
+      reflections
     };
 
     await saveUploadRecord(database, recordToSave);
@@ -144,6 +187,7 @@ function createStudentSlot(student, record, database) {
     successNode.textContent = "Saved in this browser. You can preview it here and publish it later.";
     successNode.hidden = false;
     fileInput.value = "";
+    prototypeInput.value = "";
   });
 
   lockButton.addEventListener("click", () => {
@@ -167,33 +211,72 @@ function renderStoredUpload(student, record, metaNode, previewNode) {
   }
 
   const updatedAt = new Date(record.updatedAt).toLocaleString();
+  const reflectionCount = countReflectionAnswers(record.reflections);
   metaNode.innerHTML = `
-    <p><strong>Saved file:</strong> ${record.fileName}</p>
+    <p><strong>Paper prototype:</strong> ${record.prototypeName || "No file yet"}</p>
+    <p><strong>Saved quiz:</strong> ${record.fileName || "No file yet"}</p>
+    <p><strong>Warm-up answers:</strong> ${reflectionCount} saved</p>
     <p><strong>Last update:</strong> ${updatedAt}</p>
   `;
+
+  const previewParts = [];
+
+  if (record.prototypeBlob) {
+    const prototypeUrl = getObjectUrl(`${student.id}-prototype`, record.prototypeBlob);
+    const prototypeIsImage = isPrototypeImage(record.prototypeName, record.prototypeType);
+
+    previewParts.push(prototypeIsImage
+      ? `
+        <div class="upload-preview-copy">
+          <p><strong>Paper prototype preview</strong></p>
+        </div>
+        <img class="prototype-preview" src="${prototypeUrl}" alt="${student.name} paper prototype">
+        <div class="upload-actions">
+          <a class="upload-link" href="${prototypeUrl}" target="_blank" rel="noreferrer">Open sketch</a>
+          <a class="upload-link" href="${prototypeUrl}" download="${record.prototypeName}">Download sketch</a>
+        </div>
+      `
+      : `
+        <div class="upload-preview-copy">
+          <p><strong>Paper prototype saved:</strong> ${record.prototypeName}</p>
+        </div>
+        <div class="upload-actions">
+          <a class="upload-link" href="${prototypeUrl}" download="${record.prototypeName}">Download prototype</a>
+        </div>
+      `
+    );
+  }
+
+  if (!record.blob) {
+    previewParts.push('<div class="upload-preview-copy"><p>Warm-up answers saved. Upload a quiz file whenever the student is ready.</p></div>');
+    previewNode.innerHTML = previewParts.join("");
+    updateGalleryCard(student, record);
+    return;
+  }
 
   const objectUrl = getObjectUrl(student.id, record.blob);
   const isHtml = isHtmlFile(record.fileName, record.fileType);
 
   if (isHtml) {
-    previewNode.innerHTML = `
+    previewParts.push(`
       <iframe title="${student.name} preview" sandbox="allow-scripts" src="${objectUrl}"></iframe>
       <div class="upload-actions">
         <a class="upload-link" href="${objectUrl}" target="_blank" rel="noreferrer">Open preview</a>
         <a class="upload-link" href="${objectUrl}" download="${record.fileName}">Download file</a>
       </div>
-    `;
+    `);
   } else {
-    previewNode.innerHTML = `
+    previewParts.push(`
       <div class="upload-preview-copy">
         <p>${record.fileName} is saved as a ZIP bundle. Download it when you are ready to unpack images and publish the project.</p>
       </div>
       <div class="upload-actions">
         <a class="upload-link" href="${objectUrl}" download="${record.fileName}">Download ZIP</a>
       </div>
-    `;
+    `);
   }
 
+  previewNode.innerHTML = previewParts.join("");
   updateGalleryCard(student, record);
 }
 
@@ -215,9 +298,35 @@ function updateGalleryCard(student, record) {
     }
 
     card.classList.remove("muted");
-    description.textContent = `Saved upload: ${record.fileName}`;
-    link.textContent = isHtmlFile(record.fileName, record.fileType) ? "See upload below" : "ZIP saved below";
+    if (record.fileName) {
+      description.textContent = `Saved upload: ${record.fileName}`;
+      link.textContent = isHtmlFile(record.fileName, record.fileType) ? "See upload below" : "ZIP saved below";
+    } else {
+      description.textContent = "Warm-up answers saved. Quiz upload can happen next.";
+      link.textContent = "Continue below";
+    }
   });
+}
+
+function populateReflectionInputs(inputs, reflections = {}) {
+  inputs.forEach((input) => {
+    input.value = reflections[input.dataset.reflectionKey] || "";
+  });
+}
+
+function collectReflections(inputs) {
+  return inputs.reduce((result, input) => {
+    result[input.dataset.reflectionKey] = input.value.trim();
+    return result;
+  }, {});
+}
+
+function hasReflectionContent(reflections) {
+  return Object.values(reflections).some((value) => value.length > 0);
+}
+
+function countReflectionAnswers(reflections = {}) {
+  return Object.values(reflections).filter((value) => value && value.trim().length > 0).length;
 }
 
 function openDatabase() {
@@ -277,8 +386,34 @@ function inferFileType(fileName) {
   return "text/html";
 }
 
+function inferPrototypeType(fileName) {
+  const lower = fileName.toLowerCase();
+
+  if (lower.endsWith(".pdf")) {
+    return "application/pdf";
+  }
+
+  if (lower.endsWith(".png")) {
+    return "image/png";
+  }
+
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+
+  if (lower.endsWith(".webp")) {
+    return "image/webp";
+  }
+
+  return "";
+}
+
 function isHtmlFile(fileName, fileType) {
   return fileType.includes("html") || fileName.toLowerCase().endsWith(".html");
+}
+
+function isPrototypeImage(fileName, fileType) {
+  return fileType.startsWith("image/") || /\.(png|jpg|jpeg|webp)$/i.test(fileName);
 }
 
 async function sha256(value) {
