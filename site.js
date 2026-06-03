@@ -1,34 +1,4 @@
-const students = [
-  {
-    id: "nova-quill",
-    name: "Nova Quill",
-    passwordHash: "50ef044b6d6038c12875bb418d6fb425de7772dbd018250491ad0af458878019",
-    accent: "Ready for launch"
-  },
-  {
-    id: "yoda-sprout",
-    name: "Yoda Sprout",
-    passwordHash: "e0208c7cab91aee67d39c49c6c1b6af0975a1bbc78a68201ded12bea020c4a94",
-    accent: "Tiny wise builder"
-  },
-  {
-    id: "echo-sparks",
-    name: "Puppy Pixel",
-    passwordHash: "99f7d3ac438929b39bd81f527025e89e8215377831b1b9565644b51973308d64",
-    accent: "Tail-wagging game maker"
-  },
-  {
-    id: "orbit-bloom",
-    name: "Orbit Bloom",
-    passwordHash: "d195017541601652e0cf42fc0a4a9fb2a02a76cade7a58f88d17bc55c0593f48",
-    accent: "Garden of stars"
-  }
-];
-
-const databaseName = "kidsgpt-student-uploads";
-const storeName = "uploads";
-const objectUrls = new Map();
-const reflectionPrompts = [
+const reflectionSections = [
   {
     title: "AI warm-up",
     intro: "Start with a few thoughts about AI itself.",
@@ -73,60 +43,41 @@ const reflectionPrompts = [
   }
 ];
 
-bootUploadStudio();
+bootStudentStudio();
 
-async function bootUploadStudio() {
-  const singleSlot = document.getElementById("studentPageSlot");
-  const singleStudentId = singleSlot?.dataset.studentId;
-
-  if (singleSlot && singleStudentId) {
-    const database = await openDatabase();
-    const student = students.find((entry) => entry.id === singleStudentId);
-
-    if (!student) {
-      return;
-    }
-
-    const record = await getUploadRecord(database, student.id);
-    singleSlot.innerHTML = "";
-    singleSlot.appendChild(createStudentSlot(student, record, database));
-    return;
-  }
-
-  const container = document.getElementById("studentSlots");
+async function bootStudentStudio() {
+  const container = document.getElementById("studentPageSlot");
 
   if (!container) {
     return;
   }
 
-  const database = await openDatabase();
+  const studentId = container.dataset.studentId;
+  const basePath = normalizeBasePath(document.body.dataset.basePath || "/");
+  const state = await fetchStudentState(basePath, studentId);
   container.innerHTML = "";
-
-  for (const student of students) {
-    const record = await getUploadRecord(database, student.id);
-    container.appendChild(createStudentSlot(student, record, database));
-  }
+  container.appendChild(createStudentSlot(state, basePath));
 }
 
-function createStudentSlot(student, record, database) {
+function createStudentSlot(initialState, basePath) {
   const slot = document.createElement("article");
   slot.className = "student-slot";
-  slot.dataset.studentId = student.id;
+  slot.dataset.studentId = initialState.student.id;
   slot.innerHTML = `
     <div class="student-slot-header">
       <div>
-        <h3>${student.name}</h3>
-        <p>${student.accent}</p>
+        <h3>${initialState.student.name}</h3>
+        <p>${initialState.student.accent}</p>
       </div>
       <span class="student-badge locked">Locked</span>
     </div>
-    <p class="slot-help">Enter your secret password to unlock your upload spot.</p>
+    <p class="slot-help">Enter your student password to save drafts and publish your mini area.</p>
     <form class="slot-form">
       <label>
-        Secret password
+        Student password
         <input name="password" type="password" autocomplete="off" placeholder="Type your password">
       </label>
-      <button class="slot-button" type="submit">Unlock slot</button>
+      <button class="slot-button" type="submit">Unlock studio</button>
       <p class="upload-error" hidden></p>
     </form>
     <div class="upload-panel" hidden>
@@ -139,16 +90,18 @@ function createStudentSlot(student, record, database) {
       </label>
       <p class="upload-hint">Take a photo of your paper sketch and save it here too.</p>
       <label>
-        Choose your quiz file
+        Upload your quiz file
         <input class="file-input" type="file" accept=".html,.zip,text/html,application/zip">
       </label>
       <p class="upload-hint">Upload index.html if your quiz is one file, or a .zip if it uses extra images.</p>
       <div class="upload-actions">
-        <button class="upload-button primary" type="button">Save upload</button>
-        <button class="upload-button secondary" type="button">Lock slot</button>
+        <button class="upload-button primary" type="button">Save draft</button>
+        <button class="upload-button publish" type="button">Publish live</button>
+        <button class="upload-button secondary" type="button">Lock studio</button>
       </div>
       <p class="upload-success" hidden></p>
       <div class="upload-meta"></div>
+      <div class="upload-published"></div>
       <div class="upload-preview"></div>
     </div>
   `;
@@ -161,28 +114,33 @@ function createStudentSlot(student, record, database) {
   const prototypeInput = slot.querySelector(".prototype-input");
   const fileInput = slot.querySelector(".file-input");
   const saveButton = slot.querySelector(".upload-button.primary");
+  const publishButton = slot.querySelector(".upload-button.publish");
   const lockButton = slot.querySelector(".upload-button.secondary");
   const successNode = slot.querySelector(".upload-success");
   const metaNode = slot.querySelector(".upload-meta");
+  const publishedNode = slot.querySelector(".upload-published");
   const previewNode = slot.querySelector(".upload-preview");
   const reflectionInputs = Array.from(slot.querySelectorAll("[data-reflection-key]"));
 
-  let currentRecord = record || null;
-  populateReflectionInputs(reflectionInputs, currentRecord?.reflections);
-  renderStoredUpload(student, currentRecord, metaNode, previewNode);
+  let currentState = initialState;
+  let unlockedPassword = "";
 
-  form.addEventListener("submit", async (event) => {
+  populateReflectionInputs(reflectionInputs, currentState.reflections);
+  renderCurrentState(currentState, metaNode, publishedNode, previewNode);
+
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
     errorNode.hidden = true;
 
-    const hash = await sha256(passwordInput.value.trim());
+    const password = passwordInput.value.trim();
 
-    if (hash !== student.passwordHash) {
-      errorNode.textContent = "That password does not match this slot.";
+    if (!password) {
+      errorNode.textContent = "Type your password first.";
       errorNode.hidden = false;
       return;
     }
 
+    unlockedPassword = password;
     form.hidden = true;
     panel.hidden = false;
     badge.textContent = "Unlocked";
@@ -194,38 +152,47 @@ function createStudentSlot(student, record, database) {
     successNode.hidden = true;
     errorNode.hidden = true;
 
-    const file = fileInput.files[0];
-    const prototypeFile = prototypeInput.files[0];
     const reflections = collectReflections(reflectionInputs);
+    const quizFile = fileInput.files[0] || null;
+    const prototypeFile = prototypeInput.files[0] || null;
 
-    if (!file && !prototypeFile && !hasReflectionContent(reflections)) {
-      errorNode.textContent = "Add an answer or choose a file before saving.";
+    if (!quizFile && !prototypeFile && !hasReflectionContent(reflections)) {
+      errorNode.textContent = "Add notes or choose a file before saving.";
       errorNode.hidden = false;
       return;
     }
 
-    const recordToSave = {
-      studentId: student.id,
-      fileName: file ? file.name : currentRecord?.fileName || "",
-      fileType: file ? (file.type || inferFileType(file.name)) : currentRecord?.fileType || "",
-      prototypeName: prototypeFile ? prototypeFile.name : currentRecord?.prototypeName || "",
-      prototypeType: prototypeFile ? (prototypeFile.type || inferPrototypeType(prototypeFile.name)) : currentRecord?.prototypeType || "",
-      updatedAt: new Date().toISOString(),
-      blob: file || currentRecord?.blob || null,
-      prototypeBlob: prototypeFile || currentRecord?.prototypeBlob || null,
-      reflections
-    };
+    try {
+      currentState = await saveDraft(basePath, currentState.student.id, unlockedPassword, reflections, prototypeFile, quizFile);
+      populateReflectionInputs(reflectionInputs, currentState.reflections);
+      renderCurrentState(currentState, metaNode, publishedNode, previewNode);
+      successNode.textContent = "Saved on the Mac mini. You can come back to this page and keep working.";
+      successNode.hidden = false;
+      prototypeInput.value = "";
+      fileInput.value = "";
+    } catch (error) {
+      errorNode.textContent = error.message;
+      errorNode.hidden = false;
+    }
+  });
 
-    await saveUploadRecord(database, recordToSave);
-    currentRecord = recordToSave;
-    renderStoredUpload(student, currentRecord, metaNode, previewNode);
-    successNode.textContent = "Saved in this browser. You can preview it here and publish it later.";
-    successNode.hidden = false;
-    fileInput.value = "";
-    prototypeInput.value = "";
+  publishButton.addEventListener("click", async () => {
+    successNode.hidden = true;
+    errorNode.hidden = true;
+
+    try {
+      currentState = await publishDraft(basePath, currentState.student.id, unlockedPassword);
+      renderCurrentState(currentState, metaNode, publishedNode, previewNode);
+      successNode.textContent = "Published live. Your mini area now has its own public page.";
+      successNode.hidden = false;
+    } catch (error) {
+      errorNode.textContent = error.message;
+      errorNode.hidden = false;
+    }
   });
 
   lockButton.addEventListener("click", () => {
+    unlockedPassword = "";
     form.hidden = false;
     panel.hidden = true;
     badge.textContent = "Locked";
@@ -238,7 +205,7 @@ function createStudentSlot(student, record, database) {
 }
 
 function renderReflectionSections() {
-  return reflectionPrompts.map((section) => `
+  return reflectionSections.map((section) => `
     <div class="reflection-section">
       <h4>${section.title}</h4>
       <p class="reflection-intro">${section.intro}</p>
@@ -252,112 +219,6 @@ function renderReflectionSections() {
       </div>
     </div>
   `).join("");
-}
-
-function renderStoredUpload(student, record, metaNode, previewNode) {
-  if (!record) {
-    metaNode.innerHTML = '<p class="upload-empty">No file uploaded yet.</p>';
-    previewNode.innerHTML = '<div class="upload-preview-copy"><p>Once a student uploads a file, the preview or download controls will appear here.</p></div>';
-    updateGalleryCard(student, null);
-    return;
-  }
-
-  const updatedAt = new Date(record.updatedAt).toLocaleString();
-  const reflectionCount = countReflectionAnswers(record.reflections);
-  metaNode.innerHTML = `
-    <p><strong>Paper prototype:</strong> ${record.prototypeName || "No file yet"}</p>
-    <p><strong>Saved quiz:</strong> ${record.fileName || "No file yet"}</p>
-    <p><strong>Warm-up answers:</strong> ${reflectionCount} saved</p>
-    <p><strong>Last update:</strong> ${updatedAt}</p>
-  `;
-
-  const previewParts = [];
-
-  if (record.prototypeBlob) {
-    const prototypeUrl = getObjectUrl(`${student.id}-prototype`, record.prototypeBlob);
-    const prototypeIsImage = isPrototypeImage(record.prototypeName, record.prototypeType);
-
-    previewParts.push(prototypeIsImage
-      ? `
-        <div class="upload-preview-copy">
-          <p><strong>Paper prototype preview</strong></p>
-        </div>
-        <img class="prototype-preview" src="${prototypeUrl}" alt="${student.name} paper prototype">
-        <div class="upload-actions">
-          <a class="upload-link" href="${prototypeUrl}" target="_blank" rel="noreferrer">Open sketch</a>
-          <a class="upload-link" href="${prototypeUrl}" download="${record.prototypeName}">Download sketch</a>
-        </div>
-      `
-      : `
-        <div class="upload-preview-copy">
-          <p><strong>Paper prototype saved:</strong> ${record.prototypeName}</p>
-        </div>
-        <div class="upload-actions">
-          <a class="upload-link" href="${prototypeUrl}" download="${record.prototypeName}">Download prototype</a>
-        </div>
-      `
-    );
-  }
-
-  if (!record.blob) {
-    previewParts.push('<div class="upload-preview-copy"><p>Warm-up answers saved. Upload a quiz file whenever the student is ready.</p></div>');
-    previewNode.innerHTML = previewParts.join("");
-    updateGalleryCard(student, record);
-    return;
-  }
-
-  const objectUrl = getObjectUrl(student.id, record.blob);
-  const isHtml = isHtmlFile(record.fileName, record.fileType);
-
-  if (isHtml) {
-    previewParts.push(`
-      <iframe title="${student.name} preview" sandbox="allow-scripts" src="${objectUrl}"></iframe>
-      <div class="upload-actions">
-        <a class="upload-link" href="${objectUrl}" target="_blank" rel="noreferrer">Open preview</a>
-        <a class="upload-link" href="${objectUrl}" download="${record.fileName}">Download file</a>
-      </div>
-    `);
-  } else {
-    previewParts.push(`
-      <div class="upload-preview-copy">
-        <p>${record.fileName} is saved as a ZIP bundle. Download it when you are ready to unpack images and publish the project.</p>
-      </div>
-      <div class="upload-actions">
-        <a class="upload-link" href="${objectUrl}" download="${record.fileName}">Download ZIP</a>
-      </div>
-    `);
-  }
-
-  previewNode.innerHTML = previewParts.join("");
-  updateGalleryCard(student, record);
-}
-
-function updateGalleryCard(student, record) {
-  const cards = document.querySelectorAll(".quiz-card");
-
-  cards.forEach((card) => {
-    const title = card.querySelector("h3");
-
-    if (!title || !title.textContent.includes(student.name)) {
-      return;
-    }
-
-    const description = card.querySelector(".quiz-card-body p");
-    const link = card.querySelector(".text-link");
-
-    if (!record) {
-      return;
-    }
-
-    card.classList.remove("muted");
-    if (record.fileName) {
-      description.textContent = `Saved upload: ${record.fileName}`;
-      link.textContent = isHtmlFile(record.fileName, record.fileType) ? "See upload below" : "ZIP saved below";
-    } else {
-      description.textContent = "Warm-up answers saved. Quiz upload can happen next.";
-      link.textContent = "Continue below";
-    }
-  });
 }
 
 function populateReflectionInputs(inputs, reflections = {}) {
@@ -377,101 +238,155 @@ function hasReflectionContent(reflections) {
   return Object.values(reflections).some((value) => value.length > 0);
 }
 
-function countReflectionAnswers(reflections = {}) {
-  return Object.values(reflections).filter((value) => value && value.trim().length > 0).length;
+function renderCurrentState(state, metaNode, publishedNode, previewNode) {
+  const reflectionCount = Object.values(state.reflections || {}).filter((value) => String(value || "").trim().length > 0).length;
+  const updatedAt = state.updatedAt ? new Date(state.updatedAt).toLocaleString() : "Not saved yet";
+
+  metaNode.innerHTML = `
+    <p><strong>Paper prototype:</strong> ${state.draft.prototypeName || "No file yet"}</p>
+    <p><strong>Saved quiz:</strong> ${state.draft.quizName || "No file yet"}</p>
+    <p><strong>Notes saved:</strong> ${reflectionCount}</p>
+    <p><strong>Last save:</strong> ${updatedAt}</p>
+  `;
+
+  if (state.published?.url) {
+    const publishedAt = state.published.publishedAt ? new Date(state.published.publishedAt).toLocaleString() : "Live now";
+    publishedNode.innerHTML = `
+      <div class="upload-note">
+        <strong>Live mini area:</strong> <a class="text-link" href="${state.published.url}" target="_blank" rel="noreferrer">Open published page</a>
+        <p class="upload-hint">Last published: ${publishedAt}</p>
+      </div>
+    `;
+  } else {
+    publishedNode.innerHTML = "";
+  }
+
+  const previewParts = [];
+
+  if (state.draft.prototypeUrl) {
+    const prototypeMarkup = isImageType(state.draft.prototypeType, state.draft.prototypeName)
+      ? `
+        <div class="upload-preview-copy">
+          <p><strong>Paper prototype preview</strong></p>
+        </div>
+        <img class="prototype-preview" src="${state.draft.prototypeUrl}" alt="${state.student.name} paper prototype">
+        <div class="upload-actions">
+          <a class="upload-link" href="${state.draft.prototypeUrl}" target="_blank" rel="noreferrer">Open sketch</a>
+          <a class="upload-link" href="${state.draft.prototypeUrl}" download="${state.draft.prototypeName}">Download sketch</a>
+        </div>
+      `
+      : `
+        <div class="upload-preview-copy">
+          <p><strong>Paper prototype saved:</strong> ${state.draft.prototypeName}</p>
+        </div>
+        <div class="upload-actions">
+          <a class="upload-link" href="${state.draft.prototypeUrl}" download="${state.draft.prototypeName}">Download prototype</a>
+        </div>
+      `;
+
+    previewParts.push(prototypeMarkup);
+  }
+
+  if (state.draft.quizUrl) {
+    const quizMarkup = state.draft.isHtmlQuiz
+      ? `
+        <div class="upload-preview-copy">
+          <p><strong>Draft quiz preview</strong></p>
+        </div>
+        <iframe title="${state.student.name} draft quiz" sandbox="allow-scripts" src="${state.draft.quizUrl}"></iframe>
+        <div class="upload-actions">
+          <a class="upload-link" href="${state.draft.quizUrl}" target="_blank" rel="noreferrer">Open draft quiz</a>
+          <a class="upload-link" href="${state.draft.quizUrl}" download="${state.draft.quizName}">Download quiz file</a>
+        </div>
+      `
+      : `
+        <div class="upload-preview-copy">
+          <p><strong>Draft ZIP saved:</strong> ${state.draft.quizName}</p>
+        </div>
+        <div class="upload-actions">
+          <a class="upload-link" href="${state.draft.quizUrl}" download="${state.draft.quizName}">Download ZIP</a>
+        </div>
+      `;
+
+    previewParts.push(quizMarkup);
+  }
+
+  if (previewParts.length === 0) {
+    previewNode.innerHTML = '<div class="upload-preview-copy"><p>No draft files yet. Save your notes, sketch, or quiz when you are ready.</p></div>';
+    return;
+  }
+
+  previewNode.innerHTML = previewParts.join("");
 }
 
-function openDatabase() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(databaseName, 1);
+function normalizeBasePath(value) {
+  if (!value || value === "/") {
+    return "/";
+  }
 
-    request.onupgradeneeded = () => {
-      const database = request.result;
+  return value.endsWith("/") ? value.slice(0, -1) : value;
+}
 
-      if (!database.objectStoreNames.contains(storeName)) {
-        database.createObjectStore(storeName, { keyPath: "studentId" });
-      }
-    };
+function buildUrl(basePath, suffix) {
+  return basePath === "/" ? suffix : `${basePath}${suffix}`;
+}
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+async function fetchStudentState(basePath, studentId) {
+  const response = await fetch(buildUrl(basePath, `/api/student/${studentId}`));
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "Could not load the student page.");
+  }
+
+  return payload;
+}
+
+async function saveDraft(basePath, studentId, password, reflections, prototypeFile, quizFile) {
+  const formData = new FormData();
+  formData.append("password", password);
+  formData.append("reflections", JSON.stringify(reflections));
+
+  if (prototypeFile) {
+    formData.append("prototypeFile", prototypeFile);
+  }
+
+  if (quizFile) {
+    formData.append("quizFile", quizFile);
+  }
+
+  const response = await fetch(buildUrl(basePath, `/api/student/${studentId}/save`), {
+    method: "POST",
+    body: formData
   });
+
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "Could not save draft.");
+  }
+
+  return payload;
 }
 
-function getUploadRecord(database, studentId) {
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(storeName, "readonly");
-    const store = transaction.objectStore(storeName);
-    const request = store.get(studentId);
-    request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error);
+async function publishDraft(basePath, studentId, password) {
+  const response = await fetch(buildUrl(basePath, `/api/student/${studentId}/publish`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ password })
   });
-}
 
-function saveUploadRecord(database, record) {
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(storeName, "readwrite");
-    const store = transaction.objectStore(storeName);
-    const request = store.put(record);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-}
+  const payload = await response.json();
 
-function getObjectUrl(studentId, blob) {
-  const existingUrl = objectUrls.get(studentId);
-
-  if (existingUrl) {
-    URL.revokeObjectURL(existingUrl);
+  if (!response.ok) {
+    throw new Error(payload.error || "Could not publish live.");
   }
 
-  const url = URL.createObjectURL(blob);
-  objectUrls.set(studentId, url);
-  return url;
+  return payload;
 }
 
-function inferFileType(fileName) {
-  if (fileName.toLowerCase().endsWith(".zip")) {
-    return "application/zip";
-  }
-
-  return "text/html";
-}
-
-function inferPrototypeType(fileName) {
-  const lower = fileName.toLowerCase();
-
-  if (lower.endsWith(".pdf")) {
-    return "application/pdf";
-  }
-
-  if (lower.endsWith(".png")) {
-    return "image/png";
-  }
-
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
-    return "image/jpeg";
-  }
-
-  if (lower.endsWith(".webp")) {
-    return "image/webp";
-  }
-
-  return "";
-}
-
-function isHtmlFile(fileName, fileType) {
-  return fileType.includes("html") || fileName.toLowerCase().endsWith(".html");
-}
-
-function isPrototypeImage(fileName, fileType) {
-  return fileType.startsWith("image/") || /\.(png|jpg|jpeg|webp)$/i.test(fileName);
-}
-
-async function sha256(value) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+function isImageType(mimeType, fileName) {
+  return mimeType.startsWith("image/") || /\.(png|jpg|jpeg|webp)$/i.test(fileName || "");
 }

@@ -1,0 +1,27 @@
+{
+  "name": "kids-gpt",
+  "version": "1.0.0",
+  "description": "KIDSGPT is a Mac mini-hosted class app for kid-built AI-assisted projects.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/girishlimaye1/kidsgpt.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/girishlimaye1/kidsgpt/issues"
+  },
+  "homepage": "https://github.com/girishlimaye1/kidsgpt#readme",
+  "dependencies": {
+    "adm-zip": "^0.5.17",
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
+  }
+}

@@ -653,6 +653,10 @@ h3 {
   background: var(--cyan);
 }
 
+.upload-button.publish {
+  background: var(--mint);
+}
+
 .upload-link {
   background: var(--mint);
 }
@@ -682,6 +686,11 @@ h3 {
 .upload-success {
   color: #126c44;
   font-weight: 800;
+}
+
+.upload-published {
+  display: grid;
+  gap: 12px;
 }
 
 .upload-preview {
