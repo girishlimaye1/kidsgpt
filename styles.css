@@ -493,6 +493,29 @@ h3 {
   gap: 18px;
 }
 
+.chooser-grid {
+  align-items: stretch;
+}
+
+.student-chooser {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.student-chooser h3,
+.student-chooser p {
+  margin: 0;
+}
+
+.student-chooser p {
+  color: var(--muted);
+}
+
 .student-slot {
   display: grid;
   gap: 16px;
@@ -594,6 +617,11 @@ h3 {
   font-size: 1rem;
 }
 
+.reflection-section {
+  display: grid;
+  gap: 10px;
+}
+
 .slot-button,
 .upload-button,
 .upload-link {
@@ -688,6 +716,83 @@ h3 {
   color: var(--muted);
 }
 
+.student-page {
+  min-height: 100vh;
+}
+
+.student-shell {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 72px;
+}
+
+.student-back-link {
+  display: inline-flex;
+  margin-bottom: 18px;
+  color: var(--blue);
+  font-weight: 900;
+  text-underline-offset: 4px;
+}
+
+.student-page-hero {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding: clamp(20px, 4vw, 32px);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(246, 201, 95, 0.86), rgba(125, 215, 232, 0.78)),
+    repeating-linear-gradient(90deg, transparent 0 26px, rgba(24, 33, 47, 0.13) 26px 30px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.student-page-hero p {
+  margin: 0;
+  max-width: 58ch;
+}
+
+.student-page-hero h1 {
+  max-width: 12ch;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+}
+
+.student-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(240px, 0.5fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.student-page-notes {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #fff8dd;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.student-page-notes h2,
+.student-page-notes h3,
+.student-page-notes p {
+  margin: 0;
+}
+
+.student-page-notes p {
+  color: var(--muted);
+}
+
+.student-page-notes ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.student-page-slot {
+  display: grid;
+}
+
 .site-footer {
   padding: 24px clamp(18px, 4vw, 54px);
   border-top: 1px solid rgba(24, 33, 47, 0.1);
@@ -710,7 +815,8 @@ h3 {
   }
 
   .hero,
-  .two-column {
+  .two-column,
+  .student-page-grid {
     grid-template-columns: 1fr;
   }
 

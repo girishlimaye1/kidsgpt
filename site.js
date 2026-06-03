@@ -30,25 +30,69 @@ const storeName = "uploads";
 const objectUrls = new Map();
 const reflectionPrompts = [
   {
-    key: "whatIsAi",
-    label: "What is AI?",
-    placeholder: "Write what you think AI is in your own words."
+    title: "AI warm-up",
+    intro: "Start with a few thoughts about AI itself.",
+    prompts: [
+      {
+        key: "whatIsAi",
+        label: "What is AI?",
+        placeholder: "Write what you think AI is in your own words."
+      },
+      {
+        key: "whatCanAiDo",
+        label: "What can AI do well?",
+        placeholder: "List a few good things AI can help with."
+      },
+      {
+        key: "goodAndBad",
+        label: "What is one good thing and one risky thing about AI?",
+        placeholder: "Example: AI can help me learn, but it can also be wrong."
+      }
+    ]
   },
   {
-    key: "whatCanAiDo",
-    label: "What can AI do well?",
-    placeholder: "List a few good things AI can help with."
-  },
-  {
-    key: "goodAndBad",
-    label: "What is one good thing and one risky thing about AI?",
-    placeholder: "Example: AI can help me learn, but it can also be wrong."
+    title: "What I learned from my human",
+    intro: "Do your empathy interview first, then write down what you learned.",
+    prompts: [
+      {
+        key: "likes",
+        label: "What kinds of quizzes or games do they like?",
+        placeholder: "Animals, funny quizzes, sports, mystery, cozy stories..."
+      },
+      {
+        key: "notLikes",
+        label: "What do they find boring, confusing, or annoying?",
+        placeholder: "Too many buttons, mean jokes, too much reading..."
+      },
+      {
+        key: "surprised",
+        label: "What surprised you?",
+        placeholder: "Write one thing you learned that changed your idea."
+      }
+    ]
   }
 ];
 
 bootUploadStudio();
 
 async function bootUploadStudio() {
+  const singleSlot = document.getElementById("studentPageSlot");
+  const singleStudentId = singleSlot?.dataset.studentId;
+
+  if (singleSlot && singleStudentId) {
+    const database = await openDatabase();
+    const student = students.find((entry) => entry.id === singleStudentId);
+
+    if (!student) {
+      return;
+    }
+
+    const record = await getUploadRecord(database, student.id);
+    singleSlot.innerHTML = "";
+    singleSlot.appendChild(createStudentSlot(student, record, database));
+    return;
+  }
+
   const container = document.getElementById("studentSlots");
 
   if (!container) {
@@ -87,16 +131,7 @@ function createStudentSlot(student, record, database) {
     </form>
     <div class="upload-panel" hidden>
       <div class="reflection-box">
-        <h4>Warm-up questions</h4>
-        <p class="reflection-intro">Answer these before you upload your quiz. Short answers are great.</p>
-        <div class="reflection-form">
-          ${reflectionPrompts.map((prompt) => `
-            <label>
-              ${prompt.label}
-              <textarea data-reflection-key="${prompt.key}" placeholder="${prompt.placeholder}"></textarea>
-            </label>
-          `).join("")}
-        </div>
+        ${renderReflectionSections()}
       </div>
       <label>
         Upload your paper prototype
@@ -200,6 +235,23 @@ function createStudentSlot(student, record, database) {
   });
 
   return slot;
+}
+
+function renderReflectionSections() {
+  return reflectionPrompts.map((section) => `
+    <div class="reflection-section">
+      <h4>${section.title}</h4>
+      <p class="reflection-intro">${section.intro}</p>
+      <div class="reflection-form">
+        ${section.prompts.map((prompt) => `
+          <label>
+            ${prompt.label}
+            <textarea data-reflection-key="${prompt.key}" placeholder="${prompt.placeholder}"></textarea>
+          </label>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
 }
 
 function renderStoredUpload(student, record, metaNode, previewNode) {
