@@ -2,25 +2,25 @@ const students = [
   {
     id: "nova-quill",
     name: "Nova Quill",
-    passwordHash: "6996e35e6ac56165038a2a08592d761301119eaf8462c593f842f451176769dd",
+    passwordHash: "50ef044b6d6038c12875bb418d6fb425de7772dbd018250491ad0af458878019",
     accent: "Ready for launch"
   },
   {
     id: "yoda-sprout",
     name: "Yoda Sprout",
-    passwordHash: "708d44a7940c09603c3dfa4b1a3418979545882858f11b7bf055b1e3fe90b19c",
+    passwordHash: "e0208c7cab91aee67d39c49c6c1b6af0975a1bbc78a68201ded12bea020c4a94",
     accent: "Tiny wise builder"
   },
   {
     id: "echo-sparks",
     name: "Puppy Pixel",
-    passwordHash: "4868d470d0b7d48c46e49b8a7a815d8203df51ae2f1a14a7edb847a731ea628b",
+    passwordHash: "99f7d3ac438929b39bd81f527025e89e8215377831b1b9565644b51973308d64",
     accent: "Tail-wagging game maker"
   },
   {
     id: "orbit-bloom",
     name: "Orbit Bloom",
-    passwordHash: "3769956c2c6b85d2a5d0a20c7b3dcb6e2c6c5c9b2f861812bb5d9fd24c49ee1c",
+    passwordHash: "d195017541601652e0cf42fc0a4a9fb2a02a76cade7a58f88d17bc55c0593f48",
     accent: "Garden of stars"
   }
 ];
