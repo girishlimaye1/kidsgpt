@@ -96,6 +96,14 @@ app.get(routePath("/quizzes/library-legend/index.html"), (_request, response) =>
   response.sendFile(path.join(ROOT, "quizzes", "library-legend", "index.html"));
 });
 
+app.get(routePath("/games/robot-library/"), (_request, response) => {
+  response.sendFile(path.join(ROOT, "games", "robot-library", "index.html"));
+});
+
+app.get(routePath("/games/robot-library/index.html"), (_request, response) => {
+  response.sendFile(path.join(ROOT, "games", "robot-library", "index.html"));
+});
+
 app.get(routePath("/students/:studentId/"), (request, response) => {
   const student = getStudentOrNull(request.params.studentId);
 

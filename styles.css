@@ -439,6 +439,13 @@ h3 {
     repeating-linear-gradient(90deg, transparent 0 22px, rgba(24, 33, 47, 0.17) 22px 25px);
 }
 
+.story-thumb {
+  background:
+    radial-gradient(circle at 70% 28%, rgba(255, 255, 255, 0.9) 0 13%, transparent 14%),
+    linear-gradient(135deg, rgba(25, 167, 168, 0.9), rgba(244, 199, 74, 0.78)),
+    repeating-linear-gradient(90deg, transparent 0 20px, rgba(24, 33, 47, 0.16) 20px 23px);
+}
+
 .blank-thumb {
   background:
     linear-gradient(135deg, rgba(185, 242, 208, 0.95), rgba(125, 215, 232, 0.8)),
