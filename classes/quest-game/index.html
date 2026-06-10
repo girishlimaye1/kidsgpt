@@ -569,6 +569,12 @@
 
           <h3>2. Five scenes</h3>
           <p>Each scene needs a place, a background, and a challenger.</p>
+          <div class="field-grid">
+            <label class="field one">
+              <span>Scene intro style</span>
+              <input name="sceneIntroStyle" value="When the player enters a new scene, type 1 or 2 mysterious sentences that describe the realm before the question appears.">
+            </label>
+          </div>
           <div class="scene-list" id="sceneList"></div>
 
           <h3>3. Question plan</h3>
@@ -770,7 +776,12 @@ LOCKED RULES:
 - Finishing all 10 questions with at least 1 life left shows the victory animation.
 - Big friendly buttons.
 - Coins, lives, current scene, and question number must always be visible.
+- When the player enters a new scene, show a short typed-out realm intro before the first question in that scene appears.
+- The player should be able to skip the typing and continue.
 - Make it beginner-friendly HTML, CSS, and JavaScript in one file.
+
+SCENE INTRO STYLE:
+${fieldValue("sceneIntroStyle")}
 
 POWER-UPS:
 ${powerUps.map((item) => `- ${item}`).join("\n")}
@@ -778,7 +789,8 @@ ${powerUps.map((item) => `- ${item}`).join("\n")}
 SCENES:
 ${scenes.map((scene) => `Scene ${scene.number}: ${scene.name}
 - Background: ${scene.background}
-- Challenger: ${scene.challenger}`).join("\n\n")}
+- Challenger: ${scene.challenger}
+- Please write a 1 or 2 sentence typed realm intro for this scene.`).join("\n\n")}
 
 QUESTION PLAN:
 - Topic: ${fieldValue("questionTopic")}
@@ -836,6 +848,9 @@ ${scenes.map((scene) => `Scene ${scene.number}: ${scene.name}
 - Place/background: ${scene.background}
 - Challenger: ${scene.challenger}`).join("\n\n")}
 
+SCENE INTRO STYLE:
+${fieldValue("sceneIntroStyle")}
+
 QUESTION TOPIC:
 ${fieldValue("questionTopic")}
 
@@ -854,10 +869,11 @@ ${fieldValue("victory")}
 Please give me:
 1. A stronger one-paragraph game summary.
 2. One fun improvement for each scene.
-3. Better names if any of my names are boring.
-4. Ideas for making the questions feel connected to the story.
-5. One thing that might be confusing for a player.
-6. A simple checklist before I ask AI to code the game.`;
+3. A short typed realm intro for each scene.
+4. Better names if any of my names are boring.
+5. Ideas for making the questions feel connected to the story.
+6. One thing that might be confusing for a player.
+7. A simple checklist before I ask AI to code the game.`;
     }
 
     function buildCharacterPrompt() {
