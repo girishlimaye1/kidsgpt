@@ -94,6 +94,19 @@
       font-weight: 800;
     }
 
+    .answer-box {
+      width: 100%;
+      min-height: 78px;
+      margin-top: 10px;
+      padding: 10px 11px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      resize: vertical;
+    }
+
     .talk-grid,
     .risk-grid,
     .state-grid,
@@ -413,22 +426,25 @@
           <details class="flow-step" id="ai-talk" open>
             <summary>
               <span class="flow-number">1</span>
-              <span class="flow-title">AI Talk: What Can AI Do?</span>
+              <span class="flow-title">AI Talk</span>
             </summary>
             <div class="flow-panel">
-              <p>Quick discussion before building. Students can answer out loud or type short answers in a note.</p>
+              <p>Answer in one or two sentences. There are no perfect answers.</p>
               <div class="talk-grid">
                 <article class="talk-card">
-                  <h3>Invent</h3>
-                  <p>What can AI help us create faster: names, code, characters, art ideas, or questions?</p>
+                  <h3>What is AI?</h3>
+                  <p>Say it in your own words.</p>
+                  <textarea class="answer-box" aria-label="What is AI answer"></textarea>
                 </article>
                 <article class="talk-card">
-                  <h3>Decide</h3>
-                  <p>What should the human still decide: fairness, kindness, theme, difficulty, or style?</p>
+                  <h3>What can AI help with?</h3>
+                  <p>Name two things.</p>
+                  <textarea class="answer-box" aria-label="What can AI help with answer"></textarea>
                 </article>
                 <article class="talk-card">
-                  <h3>Check</h3>
-                  <p>When AI gives an answer, how do we know if it is true, safe, and actually fun?</p>
+                  <h3>What should humans do?</h3>
+                  <p>Name one decision humans should still make.</p>
+                  <textarea class="answer-box" aria-label="What should humans do answer"></textarea>
                 </article>
               </div>
             </div>
@@ -437,26 +453,26 @@
           <details class="flow-step" id="design-corner">
             <summary>
               <span class="flow-number">2</span>
-              <span class="flow-title">Design Corner: The Game Remembers</span>
+              <span class="flow-title">Design Corner</span>
             </summary>
             <div class="flow-panel">
-              <p>Kid version: quizzes test you. Quests make you think ahead.</p>
-              <p class="mini-prompt">Technical term: game state. That means the game keeps track of things that change.</p>
+              <p>Today’s design idea: a good game remembers what happened.</p>
+              <p class="mini-prompt">Kid version: the game remembers your hearts, coins, and where you are. Technical term: game state.</p>
               <div class="state-grid">
                 <article class="state-card">
-                  <h3>Lives</h3>
-                  <p>The player starts with 3. A wrong answer removes 1.</p>
-                  <code>lives = 3</code>
+                  <h3>What changes?</h3>
+                  <p>What numbers or items should the game remember?</p>
+                  <textarea class="answer-box" aria-label="What changes in the game answer"></textarea>
                 </article>
                 <article class="state-card">
-                  <h3>Coins</h3>
-                  <p>A correct answer adds 1. Coins can buy help.</p>
-                  <code>coins = coins + 1</code>
+                  <h3>What feels fair?</h3>
+                  <p>How many hearts or coins should a player get?</p>
+                  <textarea class="answer-box" aria-label="What feels fair answer"></textarea>
                 </article>
                 <article class="state-card">
-                  <h3>Scene</h3>
-                  <p>The game remembers which challenge comes next.</p>
-                  <code>questionNumber = 7</code>
+                  <h3>What makes it fun?</h3>
+                  <p>When should a player want to use a power-up?</p>
+                  <textarea class="answer-box" aria-label="What makes the game fun answer"></textarea>
                 </article>
               </div>
             </div>
@@ -468,19 +484,22 @@
               <span class="flow-title">AI Risk Check</span>
             </summary>
             <div class="flow-panel">
-              <p>AI is useful, but the builder is responsible for the final game.</p>
+              <p>AI can help, but we still need to check it.</p>
               <div class="risk-grid">
                 <article class="risk-card">
-                  <h3>Wrong facts</h3>
-                  <p>AI can sound confident and still be wrong. Check math, science, spelling, and answer keys.</p>
+                  <h3>What could be wrong?</h3>
+                  <p>What might AI get wrong in your game?</p>
+                  <textarea class="answer-box" aria-label="What could AI get wrong answer"></textarea>
                 </article>
                 <article class="risk-card">
-                  <h3>Private info</h3>
-                  <p>Do not put full names, kid photos, addresses, school details, phone numbers, or emails in the game.</p>
+                  <h3>What should stay private?</h3>
+                  <p>What should we not type into AI or publish online?</p>
+                  <textarea class="answer-box" aria-label="What should stay private answer"></textarea>
                 </article>
                 <article class="risk-card">
-                  <h3>Copy trouble</h3>
-                  <p>Use inspired-by worlds, but invent your own names, logos, characters, and places for publishing.</p>
+                  <h3>How do we check?</h3>
+                  <p>What should we test before publishing?</p>
+                  <textarea class="answer-box" aria-label="How do we check AI answer"></textarea>
                 </article>
               </div>
             </div>
@@ -552,9 +571,34 @@
           <p>Each scene needs a place, a background, and a challenger.</p>
           <div class="scene-list" id="sceneList"></div>
 
-          <h3>3. Ten questions</h3>
-          <p>Two questions per scene. Mix subjects so the game feels surprising.</p>
-          <div class="question-list" id="questionList"></div>
+          <h3>3. Question plan</h3>
+          <p>Tell AI what kinds of questions to make. AI will create all 10 questions, choices, answers, and hints.</p>
+          <div class="field-grid">
+            <label class="field one">
+              <span>Question topic</span>
+              <input name="questionTopic" value="fractions, especially halves, quarters, and simple fraction word problems">
+            </label>
+            <label class="field">
+              <span>Difficulty</span>
+              <select name="questionDifficulty">
+                <option value="easy for an 11-year-old beginner" selected>Easy</option>
+                <option value="medium for an 11-year-old">Medium</option>
+                <option value="a mix of easy and medium for an 11-year-old">Mixed</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Question style</span>
+              <select name="questionStyle">
+                <option value="story questions connected to each scene" selected>Story questions</option>
+                <option value="short quiz questions with clear answers">Short quiz questions</option>
+                <option value="funny questions with learning hidden inside">Funny learning questions</option>
+              </select>
+            </label>
+            <label class="field one">
+              <span>Anything to include or avoid?</span>
+              <textarea name="questionNotes">Include visual, kid-friendly examples. Avoid trick questions. Make the answer key correct.</textarea>
+            </label>
+          </div>
 
           <h3>4. Power-ups and victory</h3>
           <div class="field-grid">
@@ -634,21 +678,7 @@
       ["Moon Tower", "a silver tower with the lost page spinning at the top", "the time thief"]
     ];
 
-    const questionDefaults = [
-      ["An old sign blocks the gate. What is 7 x 8?", "54", "56", "58", "64", "B", "Think of 7 groups of 8."],
-      ["The gatekeeper asks which word is spelled correctly.", "libary", "library", "liberry", "librery", "B", "It has two r sounds."],
-      ["A book bridge opens only for science. What do plants need for photosynthesis?", "Moon dust", "Sunlight", "Plastic", "Lava", "B", "Think about leaves."],
-      ["The librarian asks: which number is a prime number?", "9", "12", "13", "15", "C", "Only 1 and itself divide it."],
-      ["The airship captain lost a sentence mark. Which one asks a question?", ".", "!", "?", ",", "C", "It looks curious."],
-      ["A compass puzzle says: 100 - 37 = ?", "53", "63", "67", "73", "B", "Subtract 30, then subtract 7."],
-      ["The letter rain asks: which is a synonym for brave?", "sleepy", "careful", "courageous", "tiny", "C", "It means having courage."],
-      ["A storm sprite asks: what state of matter is water vapor?", "solid", "liquid", "gas", "metal", "C", "It floats in the air."],
-      ["The time thief asks: 3/4 is the same as what decimal?", "0.25", "0.5", "0.75", "1.25", "C", "Three quarters of a dollar."],
-      ["The final page asks: which word means the main goal of a quest?", "mission", "nap", "button", "mistake", "A", "It is what the hero tries to do."]
-    ];
-
     const sceneList = document.querySelector("#sceneList");
-    const questionList = document.querySelector("#questionList");
     const form = document.querySelector("#questForm");
     const generateButton = document.querySelector("#generateButton");
 
@@ -685,53 +715,6 @@
       }).join("");
     }
 
-    function createQuestionRows() {
-      questionList.innerHTML = questionDefaults.map((question, index) => {
-        const number = index + 1;
-        const sceneNumber = Math.ceil(number / 2);
-        return `
-          <section class="question-row">
-            <div class="question-heading">
-              <span>Question ${number}</span>
-              <span class="scene-pill">Scene ${sceneNumber}</span>
-            </div>
-            <label class="field">
-              <span>Question text</span>
-              <textarea name="q${number}Text">${question[0]}</textarea>
-            </label>
-            <div class="field-grid">
-              <label class="field">
-                <span>Choice A</span>
-                <input name="q${number}A" value="${question[1]}">
-              </label>
-              <label class="field">
-                <span>Choice B</span>
-                <input name="q${number}B" value="${question[2]}">
-              </label>
-              <label class="field">
-                <span>Choice C</span>
-                <input name="q${number}C" value="${question[3]}">
-              </label>
-              <label class="field">
-                <span>Choice D</span>
-                <input name="q${number}D" value="${question[4]}">
-              </label>
-              <label class="field">
-                <span>Correct answer</span>
-                <select name="q${number}Correct">
-                  ${["A", "B", "C", "D"].map((letter) => `<option value="${letter}" ${letter === question[5] ? "selected" : ""}>${letter}</option>`).join("")}
-                </select>
-              </label>
-              <label class="field">
-                <span>Hint</span>
-                <input name="q${number}Hint" value="${question[6]}">
-              </label>
-            </div>
-          </section>
-        `;
-      }).join("");
-    }
-
     function getScenes() {
       return Array.from({ length: 5 }, (_unused, index) => {
         const number = index + 1;
@@ -744,28 +727,8 @@
       });
     }
 
-    function getQuestions() {
-      return Array.from({ length: 10 }, (_unused, index) => {
-        const number = index + 1;
-        return {
-          number,
-          scene: Math.ceil(number / 2),
-          text: fieldValue(`q${number}Text`),
-          choices: {
-            A: fieldValue(`q${number}A`),
-            B: fieldValue(`q${number}B`),
-            C: fieldValue(`q${number}C`),
-            D: fieldValue(`q${number}D`)
-          },
-          correct: fieldValue(`q${number}Correct`),
-          hint: fieldValue(`q${number}Hint`)
-        };
-      });
-    }
-
     function buildGamePrompt() {
       const scenes = getScenes();
-      const questions = getQuestions();
       const powerUps = [
         `${fieldValue("halfPower")} (half-half, removes 2 wrong choices, cost 1 coin)`,
         `${fieldValue("hintPower")} (hint, cost 1 coin)`,
@@ -809,14 +772,20 @@ ${scenes.map((scene) => `Scene ${scene.number}: ${scene.name}
 - Background: ${scene.background}
 - Challenger: ${scene.challenger}`).join("\n\n")}
 
-QUESTIONS:
-${questions.map((question) => `Q${question.number} in Scene ${question.scene}: ${question.text}
-A. ${question.choices.A}
-B. ${question.choices.B}
-C. ${question.choices.C}
-D. ${question.choices.D}
-Correct answer: ${question.correct}
-Hint: ${question.hint}`).join("\n\n")}
+QUESTION PLAN:
+- Topic: ${fieldValue("questionTopic")}
+- Difficulty: ${fieldValue("questionDifficulty")}
+- Style: ${fieldValue("questionStyle")}
+- Notes: ${fieldValue("questionNotes")}
+
+Please create the 10 questions for me:
+- Make exactly 2 questions for each scene.
+- Connect each question to the scene story and challenger.
+- Each question must have 4 answer choices.
+- Include the correct answer.
+- Include a short hint for the hint power-up.
+- Make sure the answer key is correct.
+- Keep the questions kind, fair, and understandable for kids.
 
 VICTORY:
 ${fieldValue("victory")}
@@ -879,14 +848,12 @@ Style: bright, playful, original, no official logos, no text in the image, clear
     }
 
     createSceneRows();
-    createQuestionRows();
     generatePrompts();
 
     generateButton.addEventListener("click", generatePrompts);
     form.addEventListener("reset", () => {
       setTimeout(() => {
         createSceneRows();
-        createQuestionRows();
         generatePrompts();
       }, 0);
     });
