@@ -446,6 +446,14 @@ h3 {
     repeating-linear-gradient(90deg, transparent 0 20px, rgba(24, 33, 47, 0.16) 20px 23px);
 }
 
+.quest-thumb {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.96) 0 11%, transparent 12%),
+    radial-gradient(circle at 82% 72%, rgba(246, 201, 95, 0.94) 0 14%, transparent 15%),
+    linear-gradient(135deg, rgba(88, 182, 111, 0.92), rgba(229, 109, 117, 0.78)),
+    repeating-linear-gradient(45deg, transparent 0 20px, rgba(24, 33, 47, 0.16) 20px 24px);
+}
+
 .blank-thumb {
   background:
     linear-gradient(135deg, rgba(185, 242, 208, 0.95), rgba(125, 215, 232, 0.8)),

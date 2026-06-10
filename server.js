@@ -104,6 +104,14 @@ app.get(routePath("/games/robot-library/index.html"), (_request, response) => {
   response.sendFile(path.join(ROOT, "games", "robot-library", "index.html"));
 });
 
+app.get(routePath("/classes/quest-game/"), (_request, response) => {
+  response.sendFile(path.join(ROOT, "classes", "quest-game", "index.html"));
+});
+
+app.get(routePath("/classes/quest-game/index.html"), (_request, response) => {
+  response.sendFile(path.join(ROOT, "classes", "quest-game", "index.html"));
+});
+
 app.get(routePath("/students/:studentId/"), (request, response) => {
   const student = getStudentOrNull(request.params.studentId);
 
