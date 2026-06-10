@@ -539,8 +539,8 @@
         <p class="eyebrow">Prompt lab</p>
         <h2>Quest prompt builder</h2>
         <p class="section-copy">
-          Fill this like a worksheet. The page will write a game prompt, a character prompt,
-          and a scene/theme prompt you can paste into AI.
+          Fill this like a worksheet. The page will write an overall game idea prompt,
+          a coding prompt, a character prompt, and a scene/theme prompt you can paste into AI.
         </p>
       </div>
 
@@ -637,6 +637,14 @@
         </form>
 
         <div class="output-grid" aria-live="polite">
+          <article class="output-card compact">
+            <div class="output-header">
+              <h3>Overall game idea prompt</h3>
+              <button class="copy-button" type="button" data-copy="overallPrompt">Copy</button>
+            </div>
+            <textarea id="overallPrompt" readonly></textarea>
+          </article>
+
           <article class="output-card">
             <div class="output-header">
               <h3>Game coding prompt</h3>
@@ -798,6 +806,60 @@ SAFETY AND QUALITY:
 - Include a quick test checklist at the bottom of your explanation.`;
     }
 
+    function buildOverallPrompt() {
+      const scenes = getScenes();
+      const powerUps = [
+        fieldValue("halfPower"),
+        fieldValue("hintPower"),
+        fieldValue("skipPower"),
+        fieldValue("lifePower")
+      ];
+
+      return `You are my game design buddy. Help me improve the overall idea for my kid-friendly quest game.
+
+Do not write code yet. Help me make the game clearer, more fun, and fair for an 11-year-old player.
+
+GAME NAME:
+${fieldValue("gameName")}
+
+THEME/WORLD:
+${fieldValue("theme")}
+
+MISSION:
+${fieldValue("mission")}
+
+HERO:
+${fieldValue("hero")}
+
+MY SCENES:
+${scenes.map((scene) => `Scene ${scene.number}: ${scene.name}
+- Place/background: ${scene.background}
+- Challenger: ${scene.challenger}`).join("\n\n")}
+
+QUESTION TOPIC:
+${fieldValue("questionTopic")}
+
+QUESTION DIFFICULTY:
+${fieldValue("questionDifficulty")}
+
+QUESTION STYLE:
+${fieldValue("questionStyle")}
+
+POWER-UP NAMES:
+${powerUps.map((item) => `- ${item}`).join("\n")}
+
+VICTORY:
+${fieldValue("victory")}
+
+Please give me:
+1. A stronger one-paragraph game summary.
+2. One fun improvement for each scene.
+3. Better names if any of my names are boring.
+4. Ideas for making the questions feel connected to the story.
+5. One thing that might be confusing for a player.
+6. A simple checklist before I ask AI to code the game.`;
+    }
+
     function buildCharacterPrompt() {
       return `Create a kid-friendly hero character image for a quest game.
 
@@ -823,6 +885,7 @@ Style: bright, playful, original, no official logos, no text in the image, clear
     }
 
     function generatePrompts() {
+      document.querySelector("#overallPrompt").value = buildOverallPrompt();
       document.querySelector("#gamePrompt").value = buildGamePrompt();
       document.querySelector("#characterPrompt").value = buildCharacterPrompt();
       document.querySelector("#themePrompt").value = buildThemePrompt();
